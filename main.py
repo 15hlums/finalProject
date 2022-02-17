@@ -1,10 +1,22 @@
 import sys
 from PyQt5 import QtWidgets, uic, QtCore
+import sqlite3
+import pandas as pd
+
+# creates a database from excel file
+database = sqlite3.connect('flightdata.db')
+def import_excel_to_database(database):
+        excel_read = pd.read_excel('FlightData.xlsx', sheet_name='Sheet1', index_col=0)
+        excel_read.to_sql(name='flightdata', con=database, if_exists='replace', index=0)
+        database.commit()
+import_excel_to_database(database)
 
 # this imports the designs from QT Designer
 gui1 = uic.loadUiType('pyqt_design.ui')[0]
 gui2 = uic.loadUiType('instructions_menu.ui')[0]
 gui3 = uic.loadUiType('variables_menu.ui')[0]
+gui4 = uic.loadUiType('amendflights_menu.ui')[0]
+gui5 = uic.loadUiType('clearflights_menu.ui')[0]
 
 # this class creates the main schedule window
 class ScheduleWindow(QtWidgets.QMainWindow, gui1):
@@ -12,11 +24,24 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
+        # set column width for table
+        self.schedule_table.setColumnWidth(0,130)
+        self.schedule_table.setColumnWidth(1, 130)
+        self.schedule_table.setColumnWidth(2, 130)
+        self.schedule_table.setColumnWidth(3, 130)
+        self.schedule_table.setColumnWidth(4, 130)
+        self.schedule_table.setColumnWidth(5, 130)
+        self.load_data()
+
         self.instructions_menu = InstructionsWindow()
         self.variables_menu = VariablesWindow()
+        self.amendflights_menu = AmendWindow()
+        self.clearflights_menu = ClearWindow()
 
         self.instructions_button.clicked.connect(self.instructions_connect)
         self.variables_button.clicked.connect(self.variables_connect)
+        self.amend_button.clicked.connect(self.amend_connect)
+        self.clear_button.clicked.connect(self.clear_connect)
 
     def instructions_connect(self):
         '''
@@ -32,6 +57,36 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
         '''
         self.variables_menu.show()
 
+    def amend_connect(self):
+        '''
+        connects the amend flights button click with opening the amend flights menu
+        :return: showing the amend flights menu
+        '''
+        self.amendflights_menu.show()
+
+    def clear_connect(self):
+        '''
+        connects the clear flights button click with opening the clear flights menu
+        :return: showing the clear flights menu
+        '''
+        self.clearflights_menu.show()
+
+    def load_data(self):
+        cur = database.cursor()
+        sqlquery = 'SELECT * FROM flightdata LIMIT 100'
+
+        self.schedule_table.setRowCount(5)
+        tablerow = 0
+        for row in cur.execute(sqlquery):
+            self.schedule_table.setItem(tablerow, 0, QtWidgets.QTableWidgetItem(row[0]))
+            self.schedule_table.setItem(tablerow, 1, QtWidgets.QTableWidgetItem(row[1]))
+            self.schedule_table.setItem(tablerow, 2, QtWidgets.QTableWidgetItem(row[2]))
+            self.schedule_table.setItem(tablerow, 3, QtWidgets.QTableWidgetItem(row[3]))
+            self.schedule_table.setItem(tablerow, 4, QtWidgets.QTableWidgetItem(row[4]))
+            self.schedule_table.setItem(tablerow, 5, QtWidgets.QTableWidgetItem(row[5]))
+
+            tablerow += 1
+
 # this class creates the instructions window
 class InstructionsWindow(QtWidgets.QMainWindow, gui2):
     def __init__(self, parent=None):
@@ -40,6 +95,18 @@ class InstructionsWindow(QtWidgets.QMainWindow, gui2):
 
 # this class creates the variables window
 class VariablesWindow(QtWidgets.QMainWindow, gui3):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the amend flights window
+class AmendWindow(QtWidgets.QMainWindow, gui4):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the clear flights window
+class ClearWindow(QtWidgets.QMainWindow, gui5):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
