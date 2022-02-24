@@ -2,7 +2,6 @@ def write_to_excel(data, file_name, sheet_name):
     '''
     this function writes data into an excel file
     :param data: the data wanted in the excel file
-
     :param file_name: name of excel file to be written to
     :param sheet_name: name of sheet in excel file to be written to
     :return: the data into the excel file

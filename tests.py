@@ -1,3 +1,5 @@
+import pandas as pd
+
 def test_check_exceldataframe(func, column_name):
   try:
     assert func(column_name) == True
@@ -33,6 +35,11 @@ def test_check_excelsql(func, column_name):
         print('columns do not match')
 
 def check_excel_sql(column_name):
+    '''
+    this function will check that the data in the excel file is the same as in the sql database
+    :param column_name: name of the column
+    :return: true or false
+    '''
     sql_data = []
     sql_check = []
     dataframe_check = []

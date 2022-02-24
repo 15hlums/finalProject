@@ -25,12 +25,13 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
         self.setupUi(self)
 
         # set column width for table
-        self.schedule_table.setColumnWidth(0,130)
-        self.schedule_table.setColumnWidth(1, 130)
-        self.schedule_table.setColumnWidth(2, 130)
-        self.schedule_table.setColumnWidth(3, 130)
-        self.schedule_table.setColumnWidth(4, 130)
-        self.schedule_table.setColumnWidth(5, 130)
+        self.schedule_table.setColumnWidth(0,90)
+        self.schedule_table.setColumnWidth(1, 90)
+        self.schedule_table.setColumnWidth(2, 125)
+        self.schedule_table.setColumnWidth(3, 125)
+        self.schedule_table.setColumnWidth(4, 125)
+        self.schedule_table.setColumnWidth(5, 125)
+        self.schedule_table.setColumnWidth(6, 80)
         self.load_data()
 
         self.instructions_menu = InstructionsWindow()
@@ -84,6 +85,7 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
             self.schedule_table.setItem(tablerow, 3, QtWidgets.QTableWidgetItem(row[3]))
             self.schedule_table.setItem(tablerow, 4, QtWidgets.QTableWidgetItem(row[4]))
             self.schedule_table.setItem(tablerow, 5, QtWidgets.QTableWidgetItem(row[5]))
+            self.schedule_table.setItem(tablerow, 6, QtWidgets.QTableWidgetItem(row[6]))
 
             tablerow += 1
 
