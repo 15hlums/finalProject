@@ -17,6 +17,9 @@ gui2 = uic.loadUiType('instructions_menu.ui')[0]
 gui3 = uic.loadUiType('variables_menu.ui')[0]
 gui4 = uic.loadUiType('amendflights_menu.ui')[0]
 gui5 = uic.loadUiType('clearflights_menu.ui')[0]
+gui6 = uic.loadUiType('addflights_menu.ui')[0]
+gui7 = uic.loadUiType('deleteflights_menu.ui')[0]
+gui8 = uic.loadUiType('editflights_menu.ui')[0]
 
 # this class creates the main schedule window
 class ScheduleWindow(QtWidgets.QMainWindow, gui1):
@@ -107,8 +110,55 @@ class AmendWindow(QtWidgets.QMainWindow, gui4):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
+        self.addflights_menu = AddFlightsWindow()
+        self.deleteflights_menu = DeleteFlightsWindow()
+        self.editflights_menu = EditFlightsWindow()
+
+        self.addflights_button.clicked.connect(self.addflights_connect)
+        self.deleteflights_button.clicked.connect(self.deleteflights_connect)
+        self.editflights_button.clicked.connect(self.editflights_connect)
+
+    def addflights_connect(self):
+        '''
+        connects the add flights button click with opening the add flights menu
+        :return: showing the add flights menu
+        '''
+        self.addflights_menu.show()
+
+    def deleteflights_connect(self):
+        '''
+        connects the add flights button click with opening the add flights menu
+        :return: showing the add flights menu
+        '''
+        self.deleteflights_menu.show()
+
+    def editflights_connect(self):
+        '''
+        connects the add flights button click with opening the add flights menu
+        :return: showing the add flights menu
+        '''
+        self.editflights_menu.show()
+
 # this class creates the clear flights window
 class ClearWindow(QtWidgets.QMainWindow, gui5):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the add flights window
+class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the delete flights window
+class DeleteFlightsWindow(QtWidgets.QMainWindow, gui7):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the edit flights window
+class EditFlightsWindow(QtWidgets.QMainWindow, gui8):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
