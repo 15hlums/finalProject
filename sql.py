@@ -11,5 +11,5 @@ import_excel_to_database(database)
 cursor = database.cursor()
 
 
-for row in cursor.execute('SELECT * FROM flightdata WHERE "Arrival Time"="09:00"'):
+for row in cursor.execute('SELECT * FROM flightdata'):
         print(row)

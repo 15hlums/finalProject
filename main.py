@@ -127,15 +127,15 @@ class AmendWindow(QtWidgets.QMainWindow, gui4):
 
     def deleteflights_connect(self):
         '''
-        connects the add flights button click with opening the add flights menu
-        :return: showing the add flights menu
+        connects the delete flights button click with opening the delete flights menu
+        :return: showing the delete flights menu
         '''
         self.deleteflights_menu.show()
 
     def editflights_connect(self):
         '''
-        connects the add flights button click with opening the add flights menu
-        :return: showing the add flights menu
+        connects the edit flights button click with opening the edit flights menu
+        :return: showing the edit flights menu
         '''
         self.editflights_menu.show()
 
@@ -151,7 +151,43 @@ class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
-# this class creates the delete flights window
+        self.clearbutton.clicked.connect(self.clear_connect)
+        self.submitbutton.clicked.connect(self.submit_connect)
+
+    def clear_connect(self):
+        self.arrivaltime_input.clear()
+        self.departuretime_input.clear()
+        self.prevdest_input.clear()
+        self.nextdest_input.clear()
+        self.prevflightnum_input.clear()
+        self.nextflightnum_input.clear()
+        self.gatenum_input.clear()
+
+    def submit_connect(self):
+
+        try:
+            database_connect = sqlite3.connect('flightdata.db')
+            cursor = database_connect.cursor()
+            print("connected to database")
+
+            sqlite_insert_query = """INSERT INTO flightdata
+                                  (Arrival Time, Departure Time, Previous Destination, Next Destination, 
+                                  Previous Flight Number, Next Flight Number, Gate Number) 
+                                   VALUES 
+                                  ('09:00','09:40','New York','Bahamas','BA345', 'BA123', 'C4')"""
+
+            count = cursor.execute(sqlite_insert_query)
+            database_connect.commit()
+            print("inserted into flightdata table ", cursor.rowcount)
+            cursor.close()
+
+        except sqlite3.Error as error:
+            print("did not insert data into table", error)
+        finally:
+            if database_connect:
+                database_connect.close()
+                print("The database connection is closed")
+
 class DeleteFlightsWindow(QtWidgets.QMainWindow, gui7):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
