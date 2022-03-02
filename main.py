@@ -164,29 +164,39 @@ class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
         self.gatenum_input.clear()
 
     def submit_connect(self):
+        database_connect = sqlite3.connect('flightdata.db')
+        cursor = database_connect.cursor()
 
-        try:
-            database_connect = sqlite3.connect('flightdata.db')
-            cursor = database_connect.cursor()
-            print("connected to database")
+        cursor.execute("""INSERT INTO flightdata VALUES ('09:00','09:40','New York','Bahamas','BA345', 'BA123', 'C4')""")
+        database_connect.commit()
 
-            sqlite_insert_query = """INSERT INTO flightdata
-                                  (Arrival Time, Departure Time, Previous Destination, Next Destination, 
-                                  Previous Flight Number, Next Flight Number, Gate Number) 
-                                   VALUES 
-                                  ('09:00','09:40','New York','Bahamas','BA345', 'BA123', 'C4')"""
+        sqlquery = 'SELECT * FROM flightdata LIMIT 100'
 
-            count = cursor.execute(sqlite_insert_query)
-            database_connect.commit()
-            print("inserted into flightdata table ", cursor.rowcount)
-            cursor.close()
+        for row in cursor.execute('SELECT * FROM flightdata'):
+            print(row)
 
-        except sqlite3.Error as error:
-            print("did not insert data into table", error)
-        finally:
-            if database_connect:
-                database_connect.close()
-                print("The database connection is closed")
+        self.schedule_table.setRowCount(0)
+
+       # tablerow = 0
+        #for row in cursor.execute(sqlquery):
+         #   self.schedule_table.setItem(tablerow, 0, QtWidgets.QTableWidgetItem(row[0]))
+          #  self.schedule_table.setItem(tablerow, 1, QtWidgets.QTableWidgetItem(row[1]))
+           # self.schedule_table.setItem(tablerow, 2, QtWidgets.QTableWidgetItem(row[2]))
+            #self.schedule_table.setItem(tablerow, 3, QtWidgets.QTableWidgetItem(row[3]))
+            #self.schedule_table.setItem(tablerow, 4, QtWidgets.QTableWidgetItem(row[4]))
+            #self.schedule_table.setItem(tablerow, 5, QtWidgets.QTableWidgetItem(row[5]))
+            #self.schedule_table.setItem(tablerow, 6, QtWidgets.QTableWidgetItem(row[6]))
+            #tablerow += 1
+
+
+        cursor.close()
+
+
+
+
+        if database_connect:
+            database_connect.close()
+
 
 class DeleteFlightsWindow(QtWidgets.QMainWindow, gui7):
     def __init__(self, parent=None):
