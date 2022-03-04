@@ -1,5 +1,6 @@
 import sys
 from PyQt5 import QtWidgets, uic, QtCore
+from PyQt5.QtWidgets import QLabel, QLineEdit
 import sqlite3
 import pandas as pd
 
@@ -9,7 +10,7 @@ def import_excel_to_database(database):
         excel_read = pd.read_excel('FlightData.xlsx', sheet_name='Sheet1', index_col=0)
         excel_read.to_sql(name='flightdata', con=database, if_exists='replace', index=0)
         database.commit()
-import_excel_to_database(database)
+#import_excel_to_database(database)
 
 # this imports the designs from QT Designer
 gui1 = uic.loadUiType('pyqt_design.ui')[0]
@@ -20,6 +21,10 @@ gui5 = uic.loadUiType('clearflights_menu.ui')[0]
 gui6 = uic.loadUiType('addflights_menu.ui')[0]
 gui7 = uic.loadUiType('deleteflights_menu.ui')[0]
 gui8 = uic.loadUiType('editflights_menu.ui')[0]
+gui9 = uic.loadUiType('delay_menu.ui')[0]
+gui10 = uic.loadUiType('gateclosure_menu.ui')[0]
+gui11 = uic.loadUiType('cancelledflight_menu.ui')[0]
+gui12 = uic.loadUiType('maintenance_menu.ui')[0]
 
 # this class creates the main schedule window
 class ScheduleWindow(QtWidgets.QMainWindow, gui1):
@@ -39,7 +44,7 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
 
         self.instructions_menu = InstructionsWindow()
         self.variables_menu = VariablesWindow()
-        self.amendflights_menu = AmendWindow()
+        self.amendflights_menu = AmendWindow(self)
         self.clearflights_menu = ClearWindow()
 
         self.instructions_button.clicked.connect(self.instructions_connect)
@@ -79,7 +84,7 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
         cur = database.cursor()
         sqlquery = 'SELECT * FROM flightdata LIMIT 100'
 
-        self.schedule_table.setRowCount(5)
+        self.schedule_table.setRowCount(100)
         tablerow = 0
         for row in cur.execute(sqlquery):
             self.schedule_table.setItem(tablerow, 0, QtWidgets.QTableWidgetItem(row[0]))
@@ -103,14 +108,54 @@ class VariablesWindow(QtWidgets.QMainWindow, gui3):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.parent = parent
+
+        self.delay_menu = DelayFlightsWindow()
+        self.gateclosure_menu = GateClosureWindow()
+        self.cancelledflight_menu = CancelledFlightsWindow()
+        self.maintenance_menu = MaintenanceWindow()
+
+        self.delay_button.clicked.connect(self.delay_connect)
+        self.gateclosure_button.clicked.connect(self.gateclosure_connect)
+        self.cancelled_button.clicked.connect(self.cancelledflight_connect)
+        self.maintenance_button.clicked.connect(self.maintenance_connect)
+
+    def delay_connect(self):
+        '''
+        connects the delay flights button click with opening the delay flights menu
+        :return: showing the delay flights menu
+        '''
+        self.delay_menu.show()
+
+    def gateclosure_connect(self):
+        '''
+        connects the gate closure button click with opening the gate closure  menu
+        :return: showing the gate closure menu
+        '''
+        self.gateclosure_menu.show()
+
+    def cancelledflight_connect(self):
+        '''
+        connects the cancelled flight button click with opening the cancelled flight menu
+        :return: showing the cancelled flight menu
+        '''
+        self.cancelledflight_menu.show()
+
+    def maintenance_connect(self):
+        '''
+        connects the maintenance button click with opening the maintenance menu
+        :return: showing the maintenance menu
+        '''
+        self.maintenance_menu.show()
 
 # this class creates the amend flights window
 class AmendWindow(QtWidgets.QMainWindow, gui4):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.parent = parent
 
-        self.addflights_menu = AddFlightsWindow()
+        self.addflights_menu = AddFlightsWindow(self)
         self.deleteflights_menu = DeleteFlightsWindow()
         self.editflights_menu = EditFlightsWindow()
 
@@ -150,6 +195,7 @@ class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.parent = parent
 
         self.clearbutton.clicked.connect(self.clear_connect)
         self.submitbutton.clicked.connect(self.submit_connect)
@@ -167,44 +213,78 @@ class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
         database_connect = sqlite3.connect('flightdata.db')
         cursor = database_connect.cursor()
 
-        cursor.execute("""INSERT INTO flightdata VALUES ('09:00','09:40','New York','Bahamas','BA345', 'BA123', 'C4')""")
-        database_connect.commit()
+        arrival = self.arrivaltime_input.text()
+        departure = self.departuretime_input.text()
+        prev_destination = self.prevdest_input.text()
+        next_destination = self.nextdest_input.text()
+        prev_flightnum = self.prevflightnum_input.text()
+        next_flightnum = self.nextflightnum_input.text()
+        gate_num = self.gatenum_input.text()
 
-        sqlquery = 'SELECT * FROM flightdata LIMIT 100'
+        data = (arrival, departure, prev_destination, next_destination, prev_flightnum, next_flightnum, gate_num)
+        query = "INSERT INTO flightdata values(?,?,?,?,?,?,?)"
+        cursor.execute(query, data)
+
+        database_connect.commit()
 
         for row in cursor.execute('SELECT * FROM flightdata'):
             print(row)
 
-        self.schedule_table.setRowCount(0)
-
-       # tablerow = 0
-        #for row in cursor.execute(sqlquery):
-         #   self.schedule_table.setItem(tablerow, 0, QtWidgets.QTableWidgetItem(row[0]))
-          #  self.schedule_table.setItem(tablerow, 1, QtWidgets.QTableWidgetItem(row[1]))
-           # self.schedule_table.setItem(tablerow, 2, QtWidgets.QTableWidgetItem(row[2]))
-            #self.schedule_table.setItem(tablerow, 3, QtWidgets.QTableWidgetItem(row[3]))
-            #self.schedule_table.setItem(tablerow, 4, QtWidgets.QTableWidgetItem(row[4]))
-            #self.schedule_table.setItem(tablerow, 5, QtWidgets.QTableWidgetItem(row[5]))
-            #self.schedule_table.setItem(tablerow, 6, QtWidgets.QTableWidgetItem(row[6]))
-            #tablerow += 1
-
+        self.parent.parent.load_data()
 
         cursor.close()
-
-
-
 
         if database_connect:
             database_connect.close()
 
-
+# this class creates the delete flights window
 class DeleteFlightsWindow(QtWidgets.QMainWindow, gui7):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
+        self.clearbutton.clicked.connect(self.clear_connect)
+        #self.submitbutton.clicked.connect(self.submit_connect)
+
+    def clear_connect(self):
+        self.flightnum_input.clear()
+
 # this class creates the edit flights window
 class EditFlightsWindow(QtWidgets.QMainWindow, gui8):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the delay flights window
+class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+        self.clearbutton.clicked.connect(self.clear_connect)
+        #self.submitbutton.clicked.connect(self.submit_connect)
+
+    def clear_connect(self):
+        self.flightnum_input.clear()
+        self.arrivaltime_input.clear()
+        self.delaytime_input.clear()
+
+    #def submit_connect(self):
+
+# this class creates the gate closure flights window
+class GateClosureWindow(QtWidgets.QMainWindow, gui10):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the cancelled flights window
+class CancelledFlightsWindow(QtWidgets.QMainWindow, gui11):
+    def __init__(self, parent=None):
+        QtWidgets.QMainWindow.__init__(self)
+        self.setupUi(self)
+
+# this class creates the maintenance flights window
+class MaintenanceWindow(QtWidgets.QMainWindow, gui12):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
