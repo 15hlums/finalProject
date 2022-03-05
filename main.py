@@ -1,6 +1,5 @@
 import sys
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QLabel, QLineEdit
 import sqlite3
 import pandas as pd
 
@@ -10,7 +9,7 @@ def import_excel_to_database(database):
         excel_read = pd.read_excel('FlightData.xlsx', sheet_name='Sheet1', index_col=0)
         excel_read.to_sql(name='flightdata', con=database, if_exists='replace', index=0)
         database.commit()
-import_excel_to_database(database)
+#import_excel_to_database(database)
 
 # this imports the designs from QT Designer
 gui1 = uic.loadUiType('pyqt_design.ui')[0]
@@ -239,21 +238,87 @@ class DeleteFlightsWindow(QtWidgets.QMainWindow, gui7):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.parent = parent
 
         self.clearbutton.clicked.connect(self.clear_connect)
-        #self.submitbutton.clicked.connect(self.submit_connect)
+        self.submitbutton.clicked.connect(self.submit_connect)
 
     def clear_connect(self):
         self.flightnum_input.clear()
+
+    def submit_connect(self):
+        database_connect = sqlite3.connect('flightdata.db')
+        cursor = database_connect.cursor()
+
+        arrival = self.arrivaltime_input.text()
+        prev_flightnum = self.prevflightnum_input.text()
+
+        #data = (arrival, prev_flightnum)
+        #query = ''' DELETE FROM flightdata WHERE "Arrival Time" = "?" AND "Previous Flight Number" = "?" '''
+        #cursor.execute(query, data)
+
+        cursor.execute(''' DELETE FROM flightdata WHERE "Arrival Time" = "1" AND "Previous Flight Number" = "123" ''')
+
+        for row in cursor.execute('SELECT * FROM flightdata'):
+            print(row)
+
+        database_connect.commit()
+
+        self.parent.parent.load_data()
+
+        cursor.close()
+
+        if database_connect:
+            database_connect.close()
 
 # this class creates the edit flights window
 class EditFlightsWindow(QtWidgets.QMainWindow, gui8):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.parent = parent
+
+        self.clearbutton.clicked.connect(self.clear_connect)
+        self.submitbutton.clicked.connect(self.submit_connect)
+
+    def clear_connect(self):
+        self.arrivaltime_input.clear()
+        self.departuretime_input.clear()
+        self.prevdest_input.clear()
+        self.nextdest_input.clear()
+        self.prevflightnum_input.clear()
+        self.nextflightnum_input.clear()
+        self.gatenum_input.clear()
+
+    def submit_connect(self):
+        database_connect = sqlite3.connect('flightdata.db')
+        cursor = database_connect.cursor()
+
+        arrival = self.arrivaltime_input.text()
+        departure = self.departuretime_input.text()
+        prev_destination = self.prevdest_input.text()
+        next_destination = self.nextdest_input.text()
+        prev_flightnum = self.prevflightnum_input.text()
+        next_flightnum = self.nextflightnum_input.text()
+        gate_num = self.gatenum_input.text()
+
+        # !!!THIS NEEDS TO BE FOR EDIT FLIGHT - CURRENTLY COPIED FROM ADD FLIGHT!!!
+        #data = (arrival, departure, prev_destination, next_destination, prev_flightnum, next_flightnum, gate_num)
+        #query = "INSERT INTO flightdata values(?,?,?,?,?,?,?)"
+        #cursor.execute(query, data)
+
+        database_connect.commit()
+
+        self.parent.parent.load_data()
+
+        cursor.close()
+
+        if database_connect:
+            database_connect.close()
 
 # this class creates the delay flights window
 class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
+
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
@@ -273,12 +338,20 @@ class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
 
         cursor.execute(
             ''' UPDATE flightdata
-            SET "Departure Time" = "12:10"
-            WHERE "Arrival Time" = "09:30" ''')
+            SET "Arrival Time" = "09:15"
+            WHERE "Previous Destination" = "Paris Airport F" ''')
+
+        print(cursor.execute(
+            ''' SELECT * 
+            FROM flightdata 
+            WHERE "Arrival Time" = "09:15"'''))
+
+        for row in cursor.execute('SELECT * FROM flightdata'):
+            print(row)
 
         database_connect.commit()
 
-        self.parent.parent.load_data()
+        #self.parent.parent.load_data()
 
         cursor.close()
 
