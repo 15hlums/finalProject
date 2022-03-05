@@ -10,7 +10,7 @@ def import_excel_to_database(database):
         excel_read = pd.read_excel('FlightData.xlsx', sheet_name='Sheet1', index_col=0)
         excel_read.to_sql(name='flightdata', con=database, if_exists='replace', index=0)
         database.commit()
-#import_excel_to_database(database)
+import_excel_to_database(database)
 
 # this imports the designs from QT Designer
 gui1 = uic.loadUiType('pyqt_design.ui')[0]
@@ -28,7 +28,7 @@ gui12 = uic.loadUiType('maintenance_menu.ui')[0]
 
 # this class creates the main schedule window
 class ScheduleWindow(QtWidgets.QMainWindow, gui1):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, parent1=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
@@ -227,9 +227,6 @@ class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
 
         database_connect.commit()
 
-        for row in cursor.execute('SELECT * FROM flightdata'):
-            print(row)
-
         self.parent.parent.load_data()
 
         cursor.close()
@@ -260,16 +257,33 @@ class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
+        self.parent = parent
 
         self.clearbutton.clicked.connect(self.clear_connect)
-        #self.submitbutton.clicked.connect(self.submit_connect)
+        self.submitbutton.clicked.connect(self.submit_connect)
 
     def clear_connect(self):
         self.flightnum_input.clear()
         self.arrivaltime_input.clear()
         self.delaytime_input.clear()
 
-    #def submit_connect(self):
+    def submit_connect(self):
+        database_connect = sqlite3.connect('flightdata.db')
+        cursor = database_connect.cursor()
+
+        cursor.execute(
+            ''' UPDATE flightdata
+            SET "Departure Time" = "12:10"
+            WHERE "Arrival Time" = "09:30" ''')
+
+        database_connect.commit()
+
+        self.parent.parent.load_data()
+
+        cursor.close()
+
+        if database_connect:
+            database_connect.close()
 
 # this class creates the gate closure flights window
 class GateClosureWindow(QtWidgets.QMainWindow, gui10):
