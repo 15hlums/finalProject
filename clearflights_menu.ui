@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>634</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Clear Flights</string>
+  </property>
+  <widget class="QTableWidget" name="tableWidget">
+   <property name="geometry">
+    <rect>
+     <x>25</x>
+     <y>21</y>
+     <width>581</width>
+     <height>251</height>
+    </rect>
+   </property>
+   <row>
+    <property name="text">
+     <string/>
+    </property>
+   </row>
+   <column>
+    <property name="text">
+     <string>Arrival Time</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Departure Time</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Previous Destination</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Next Destination</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Previous Flight Number</string>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>Next Flight Number</string>
+    </property>
+   </column>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
