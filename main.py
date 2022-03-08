@@ -386,21 +386,39 @@ class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
         turnaround = (f.time_convertmin(f.delay_changetime(delay, departure_time)) -
                       f.time_convertmin(f.delay_changetime(delay, arrival_time)))
 
-        print(f.time_convertmin(f.delay_changetime(delay, arrival_time)) + turnaround)
-        print(arrival_time)
+        #print(arrival_time)
 
-        for i in range (0, turnaround):
-            data_gatenum = (f.delay_changetime(delay, arrival_time), flight_num)
-            cursor.execute(gatenum_delay, data_gatenum)
+        for i in range(0, turnaround):
+            if len(str(i)) == 1:
+                time_period = arrival_time[0] + arrival_time[1] + arrival_time[2] + arrival_time[3] + str(i)
+                #print(time_period)
+                print(f.delay_changetime(delay, time_period))
+                print()
+                data_gatenum = (f.delay_changetime(delay, time_period), flight_num)
+                cursor.execute(gatenum_delay, data_gatenum)
+                #for row in cursor.execute(gatenum_delay, data_gatenum):
+                    #print(row)
+            else:
+                time_period = arrival_time[0] + arrival_time[1] + arrival_time[2] + str(i)[0] + str(i)[1]
+                #print(time_period)
+                print(f.delay_changetime(delay, time_period))
+                print()
+                data_gatenum = (f.delay_changetime(delay, time_period), flight_num)
+                cursor.execute(gatenum_delay, data_gatenum)
+               # for row in cursor.execute(gatenum_delay, data_gatenum):
+                #    print(row)
+
+        # !! NEED TO CHECK FUNCTION TO WHY IT IS SWAPPING HOURS WHICH IS ERROR AND WHY SECOND GATE HAS NOT BEEN FOUND!!
 
         # these are the gates available at the terminal
         gates = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3']
 
         # this compares and sees if a gate is available or not at the allocated time
         for row in cursor.execute(gatenum_delay, data_gatenum):
+            #print(row)
             if row:
                 for i in range(0, len(gates)):
-                   # for j in range(len(row)):
+                    for j in range(len(row)):
                         if gates[i] != row[0]:
                             # updates database with new gate number
                             updategates_query = '''
