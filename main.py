@@ -2,6 +2,7 @@ import sys
 from PyQt5 import QtWidgets, uic, QtCore
 import sqlite3
 import pandas as pd
+import functions as f
 
 # creates a database from excel file
 database = sqlite3.connect('flightdata.db')
@@ -9,7 +10,7 @@ def import_excel_to_database(database):
         excel_read = pd.read_excel('FlightData.xlsx', sheet_name='Sheet1', index_col=0)
         excel_read.to_sql(name='flightdata', con=database, if_exists='replace', index=0)
         database.commit()
-#import_excel_to_database(database)
+import_excel_to_database(database)
 
 # this imports the designs from QT Designer
 gui1 = uic.loadUiType('pyqt_design.ui')[0]
@@ -27,7 +28,7 @@ gui12 = uic.loadUiType('maintenance_menu.ui')[0]
 
 # this class creates the main schedule window
 class ScheduleWindow(QtWidgets.QMainWindow, gui1):
-    def __init__(self, parent=None, parent1=None):
+    def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
@@ -41,10 +42,10 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
         self.schedule_table.setColumnWidth(6, 80)
         self.load_data()
 
-        self.instructions_menu = InstructionsWindow()
-        self.variables_menu = VariablesWindow()
+        self.instructions_menu = InstructionsWindow(self)
+        self.variables_menu = VariablesWindow(self)
         self.amendflights_menu = AmendWindow(self)
-        self.clearflights_menu = ClearWindow()
+        self.clearflights_menu = ClearWindow(self)
 
         self.instructions_button.clicked.connect(self.instructions_connect)
         self.variables_button.clicked.connect(self.variables_connect)
@@ -83,6 +84,7 @@ class ScheduleWindow(QtWidgets.QMainWindow, gui1):
         cur = database.cursor()
         sqlquery = 'SELECT * FROM flightdata LIMIT 100'
 
+        self.schedule_table.clearContents()
         self.schedule_table.setRowCount(100)
         tablerow = 0
         for row in cur.execute(sqlquery):
@@ -109,10 +111,10 @@ class VariablesWindow(QtWidgets.QMainWindow, gui3):
         self.setupUi(self)
         self.parent = parent
 
-        self.delay_menu = DelayFlightsWindow()
-        self.gateclosure_menu = GateClosureWindow()
-        self.cancelledflight_menu = CancelledFlightsWindow()
-        self.maintenance_menu = MaintenanceWindow()
+        self.delay_menu = DelayFlightsWindow(self)
+        self.gateclosure_menu = GateClosureWindow(self)
+        self.cancelledflight_menu = CancelledFlightsWindow(self)
+        self.maintenance_menu = MaintenanceWindow(self)
 
         self.delay_button.clicked.connect(self.delay_connect)
         self.gateclosure_button.clicked.connect(self.gateclosure_connect)
@@ -155,8 +157,8 @@ class AmendWindow(QtWidgets.QMainWindow, gui4):
         self.parent = parent
 
         self.addflights_menu = AddFlightsWindow(self)
-        self.deleteflights_menu = DeleteFlightsWindow()
-        self.editflights_menu = EditFlightsWindow()
+        self.deleteflights_menu = DeleteFlightsWindow(self)
+        self.editflights_menu = EditFlightsWindow(self)
 
         self.addflights_button.clicked.connect(self.addflights_connect)
         self.deleteflights_button.clicked.connect(self.deleteflights_connect)
@@ -253,18 +255,19 @@ class DeleteFlightsWindow(QtWidgets.QMainWindow, gui7):
         arrival = self.arrivaltime_input.text()
         prev_flightnum = self.prevflightnum_input.text()
 
-        #data = (arrival, prev_flightnum)
-        #query = ''' DELETE FROM flightdata WHERE "Arrival Time" = "?" AND "Previous Flight Number" = "?" '''
-        #cursor.execute(query, data)
-
-        cursor.execute(''' DELETE FROM flightdata WHERE "Arrival Time" = "1" AND "Previous Flight Number" = "123" ''')
-
-        for row in cursor.execute('SELECT * FROM flightdata'):
-            print(row)
+        data = (arrival, prev_flightnum)
+        query = ''' 
+        DELETE FROM flightdata 
+        WHERE "Arrival Time" = (?) 
+        AND "Previous Flight Number" = (?) '''
+        cursor.execute(query, data)
 
         database_connect.commit()
 
         self.parent.parent.load_data()
+
+        for row in cursor.execute('SELECT * FROM flightdata'):
+            print(row)
 
         cursor.close()
 
@@ -318,7 +321,6 @@ class EditFlightsWindow(QtWidgets.QMainWindow, gui8):
 
 # this class creates the delay flights window
 class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
-
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
@@ -336,22 +338,89 @@ class DelayFlightsWindow(QtWidgets.QMainWindow, gui9):
         database_connect = sqlite3.connect('flightdata.db')
         cursor = database_connect.cursor()
 
-        cursor.execute(
-            ''' UPDATE flightdata
-            SET "Arrival Time" = "09:15"
-            WHERE "Previous Destination" = "Paris Airport F" ''')
+        #delay = self.delaytime_input.text()
+        #arrival_time = self.arrivaltime_input.text()
+        #flight_num = self.flightnum_input.text()
 
-        print(cursor.execute(
-            ''' SELECT * 
-            FROM flightdata 
-            WHERE "Arrival Time" = "09:15"'''))
+        delay = '30'
+        arrival_time = '09:30'
+        flight_num = 'BA9669'
 
-        for row in cursor.execute('SELECT * FROM flightdata'):
-            print(row)
+        # this gets the departure time from the table
+        departure_query = '''
+            SELECT "Departure Time"
+            FROM flightdata
+            WHERE "Arrival Time" = (?)
+            AND "Previous Flight Number" = (?)'''
+        departure_data = (arrival_time, flight_num)
+        cursor.execute(departure_query, departure_data)
+
+        for row in cursor.execute(departure_query, departure_data):
+            departure_time = (row[0])
+
+        # updates database with new arrival time with the delay
+        arrival_query = '''
+            UPDATE flightdata
+            SET "Arrival Time" = (?)
+            WHERE "Arrival Time" = (?)
+            AND "Previous Flight Number" = (?)'''
+        arrival_data = (f.delay_changetime(delay, arrival_time), arrival_time, flight_num)
+        cursor.execute(arrival_query, arrival_data)
+
+        # updates database with new departure time with the delay
+        departure_update_query = '''
+            UPDATE flightdata
+            SET "Departure Time" = (?)
+            WHERE "Arrival Time" = (?)
+            AND "Previous Flight Number" = (?)'''
+        departure_update_data = (f.delay_changetime(delay, departure_time), f.delay_changetime(delay, arrival_time), flight_num)
+        cursor.execute(departure_update_query, departure_update_data)
+
+        # gets the gate number of any flights that arrive at the same time
+        gatenum_delay = '''
+            SELECT "Gate Number"
+            FROM flightdata
+            WHERE "Arrival Time" = (?)
+            AND "Previous Flight Number" = (?)'''
+
+        turnaround = (f.time_convertmin(f.delay_changetime(delay, departure_time)) -
+                      f.time_convertmin(f.delay_changetime(delay, arrival_time)))
+
+        print(f.time_convertmin(f.delay_changetime(delay, arrival_time)) + turnaround)
+        print(arrival_time)
+
+        for i in range (0, turnaround):
+            data_gatenum = (f.delay_changetime(delay, arrival_time), flight_num)
+            cursor.execute(gatenum_delay, data_gatenum)
+
+        # these are the gates available at the terminal
+        gates = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3']
+
+        # this compares and sees if a gate is available or not at the allocated time
+        for row in cursor.execute(gatenum_delay, data_gatenum):
+            if row:
+                for i in range(0, len(gates)):
+                   # for j in range(len(row)):
+                        if gates[i] != row[0]:
+                            # updates database with new gate number
+                            updategates_query = '''
+                                UPDATE flightdata
+                                SET "Gate Number" = (?)
+                                WHERE "Arrival Time" = (?)
+                                AND "Previous Flight Number" = (?)'''
+                            updategates_data = (gates[i], f.delay_changetime(delay, arrival_time), 'BA9669')
+                            cursor.execute(updategates_query, updategates_data)
+
+                            break
+                        else:
+                            None
 
         database_connect.commit()
 
-        #self.parent.parent.load_data()
+        self.parent.parent.load_data()
+
+        #for row in cursor.execute('SELECT * FROM flightdata'):
+         #   print(row)
 
         cursor.close()
 
