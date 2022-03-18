@@ -1,21 +1,11 @@
 import sys
 from PyQt5 import QtWidgets, uic, QtCore
 import sqlite3
-import pandas as pd
 import functions as f
 
 # creates a database from excel file
 database = sqlite3.connect('flightdata.db')
-def import_excel_to_database(database):
-    '''
-    this imports the data from excel into a database
-    :param database: the database the excel data will be imported into
-    :return: database with excel data in
-    '''
-    excel_read = pd.read_excel('FlightData.xlsx', sheet_name='Sheet1', index_col=0)
-    excel_read.to_sql(name='flightdata', con=database, if_exists='replace', index=0)
-    database.commit()
-import_excel_to_database(database)
+f.import_excel_to_database(database)
 
 # this imports the designs from QT Designer
 gui1 = uic.loadUiType('pyqt_design.ui')[0]
@@ -205,6 +195,7 @@ class FilterWindow(QtWidgets.QMainWindow, gui5):
 
         self.clearbutton.clicked.connect(self.clear_connect)
         self.submitbutton.clicked.connect(self.submit_connect)
+        self.resetbutton.clicked.connect(self.reset_connect)
 
     def clear_connect(self):
         '''
@@ -222,8 +213,8 @@ class FilterWindow(QtWidgets.QMainWindow, gui5):
         fucntion from parent class to upload to gui
         :return: updates data in database and uploads to gui
         '''
-        #database_connect = sqlite3.connect('flightdata.db')
-        #cursor = database_connect.cursor()
+        database_connect = sqlite3.connect('flightdata.db')
+        cursor = database_connect.cursor()
 
         #arrival = self.arrivaltime_input.text()
         #departure = self.departuretime_input.text()
@@ -232,47 +223,103 @@ class FilterWindow(QtWidgets.QMainWindow, gui5):
         #gatenum = self.gatenum_input.text()
 
         arrival = '09:30'
-        departure = '10:00'
-        prevdest = 'Paris'
-        nextdest = 'New York'
-        gatenum = 'B'
+        departure = 'None'
+        prevdest = 'None'
+        nextdest = 'None'
+        gatenum = 'None'
 
         filter_list = []
+        filter_names = []
+        filter_data = []
 
-        try:
-            if arrival != 'None':
-                filter_list.append(arrival)
-            if departure != 'None':
-                filter_list.append(departure)
-            if prevdest != 'None':
-                filter_list.append(prevdest)
-            if nextdest != 'None':
-                filter_list.append(nextdest)
-            if gatenum != 'None':
-                filter_list.append(gatenum)
-        finally:
-            if filter_list == ['09:30', '10:00', 'Paris', 'New York', 'B']:
-                print('Test Correct')
-            else:
-                print('Test Incorrect')
-                print(filter_list)
+        if arrival != 'None':
+            filter_list.clear()
+            filter_list.append(arrival)
+            filter_data.append(arrival)
+            filter_names.append('arrival')
+            filter_data = tuple(filter_list)
 
+            filterarrival_query = '''
+            SELECT *
+            FROM flightdata
+            WHERE "Arrival Time" LIKE (?) '''
 
+            cursor.execute(filterarrival_query, filter_data)
 
-        #data = (arrival, departure, prev_destination, next_destination, prev_flightnum, next_flightnum, gate_num)
-        #query = "INSERT INTO flightdata values(?,?,?,?,?,?,?)"
-        #cursor.execute(query, data)
+        if departure != 'None':
+            filter_list.clear()
+            filter_list.append(departure)
+            filter_data.append(departure)
+            filter_data.append('departure')
+            filter_data = tuple(filter_list)
 
-        #database_connect.commit()
+            filterdeparture_query = '''
+            SELECT *
+            FROM flightdata
+            WHERE "Departure Time" LIKE (?) '''
 
-        #self.parent.parent.load_data()
+            cursor.execute(filterdeparture_query, filter_data)
 
-        #cursor.close()
+        if prevdest != 'None':
+            filter_list.clear()
+            filter_list.append(prevdest)
+            filter_data.append(prevdest)
+            filter_names.append('prevdest')
+            filter_data = tuple(filter_list)
 
-        #if database_connect:
-         #   database_connect.close()
+            filterprevdest_query = '''
+            SELECT *
+            FROM flightdata
+            WHERE "Previous Destination" LIKE (?) '''
 
+            cursor.execute(filterprevdest_query, filter_data)
 
+        if nextdest != 'None':
+            filter_list.clear()
+            filter_list.append(nextdest)
+            filter_data.append(nextdest)
+            filter_names.append('nextdest')
+            filter_data = tuple(filter_list)
+
+            filternextdest_query = '''
+            SELECT *
+            FROM flightdata
+            WHERE "Nest Destination" LIKE (?) '''
+
+            cursor.execute(filternextdest_query, filter_data)
+
+        if gatenum != 'None':
+            filter_list.clear()
+            filter_list.append(gatenum)
+            filter_data.append(gatenum)
+            filter_names.append('gatenum')
+            filter_data = tuple(filter_list)
+
+            filtergatenum_query = '''
+            SELECT *
+            FROM flightdata
+            WHERE "Gate Number" LIKE (?) '''
+
+            cursor.execute(filtergatenum_query, filter_data)
+
+        print(len(filter_names))
+        print(filter_data)
+
+        f.filter_deleterows(filter_names, filter_data)
+
+        database_connect.commit()
+
+        self.parent.load_data()
+
+        cursor.close()
+
+        if database_connect:
+            database_connect.close()
+
+    def reset_connect(self):
+        database = sqlite3.connect('flightdata.db')
+        f.import_excel_to_database(database)
+        self.parent.load_data()
 
 # this class creates the add flights window
 class AddFlightsWindow(QtWidgets.QMainWindow, gui6):
