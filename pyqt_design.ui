@@ -68,7 +68,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Clear Flights</string>
+     <string>Filter Flights</string>
     </property>
    </widget>
    <widget class="QPushButton" name="amend_button">
